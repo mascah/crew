@@ -13,6 +13,7 @@ import plistlib
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from crew import config
@@ -149,11 +150,14 @@ def launch_agent(name: str, remove: bool, dry_run: bool) -> int:
     config.home().mkdir(parents=True, exist_ok=True)
     plist.parent.mkdir(parents=True, exist_ok=True)
     plist.write_bytes(plistlib.dumps(definition))
-    for domain in domains:
-        done = subprocess.run(["launchctl", "bootstrap", domain, str(plist)], capture_output=True)
-        if done.returncode == 0:
-            print(f"loaded     {label} in {domain}")
-            return 0
+    for _ in range(10):  # the old copy may still be shutting down: launchd refuses until it has
+        for domain in domains:
+            done = subprocess.run(["launchctl", "bootstrap", domain, str(plist)],
+                                  capture_output=True)
+            if done.returncode == 0:
+                print(f"loaded     {label} in {domain}")
+                return 0
+        time.sleep(1)
     print(f"could not load {label}: {done.stderr.decode().strip()}", file=sys.stderr)
     return 1
 
