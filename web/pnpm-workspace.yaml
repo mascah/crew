@@ -1,0 +1,4 @@
+# Held one release back: the Mini's pnpm rejects packages published within the
+# last day, and 1.2.13 came out the day this was locked. Drop this once it ages.
+overrides:
+  rolldown: 1.2.12
