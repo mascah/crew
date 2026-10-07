@@ -47,23 +47,25 @@ class HermesAdapter:
         home = Path(event.get("hermes_home") or self.home)
         if event.get("platform") == "cli":
             s["cwd"] = event.get("cwd")
-        with contextlib.suppress(sqlite3.Error, OSError, ValueError):
-            db = sqlite3.connect(f"file:{home / 'state.db'}?mode=ro", uri=True, timeout=0.2)
-            try:
-                row = db.execute(
-                    "SELECT cwd, git_repo_root, title, parent_session_id, model_config"
-                    " FROM sessions WHERE id = ?", (sid,),
-                ).fetchone()
-            finally:
-                db.close()
-            if row:
-                s["cwd"] = row[0] or row[1] or s["cwd"]
-                s["title"] = row[2]
-                # A parent link alone can be a branch or reset; delegation is marked.
-                config = json.loads(row[4] or "{}")
-                if row[3] and config.get("_delegate_from") == row[3]:
-                    s["parent"] = s["parent"] or row[3]
-                return True
+        # One gateway serves every profile, so the session may be saved in any of them.
+        for store in [home / "state.db", *sorted(home.glob("profiles/[!.]*/state.db"))]:
+            with contextlib.suppress(sqlite3.Error, OSError, ValueError):
+                db = sqlite3.connect(f"file:{store}?mode=ro", uri=True, timeout=0.2)
+                try:
+                    row = db.execute(
+                        "SELECT cwd, git_repo_root, title, parent_session_id, model_config"
+                        " FROM sessions WHERE id = ?", (sid,),
+                    ).fetchone()
+                finally:
+                    db.close()
+                if row:
+                    s["cwd"] = row[0] or row[1] or s["cwd"]
+                    s["title"] = row[2]
+                    # A parent link alone can be a branch or reset; delegation is marked.
+                    config = json.loads(row[4] or "{}")
+                    if row[3] and config.get("_delegate_from") == row[3]:
+                        s["parent"] = s["parent"] or row[3]
+                    return True
         return False
 
     def _apply(self, event: dict, result: Result) -> None:

@@ -89,15 +89,22 @@ def test_missing_wait_observers_are_reported_not_inferred(tmp_path, clock):
 
 
 def test_delegation_links_helpers_and_plain_parent_links_do_not(tmp_path, clock):
+    table = ("CREATE TABLE sessions (id TEXT, cwd TEXT, git_repo_root TEXT, title TEXT,"
+             " parent_session_id TEXT, model_config TEXT)")
     db = sqlite3.connect(tmp_path / "state.db")
-    db.execute("CREATE TABLE sessions (id TEXT, cwd TEXT, git_repo_root TEXT, title TEXT,"
-               " parent_session_id TEXT, model_config TEXT)")
+    db.execute(table)
     db.executemany("INSERT INTO sessions VALUES (?,?,?,?,?,?)", [
         ("p", "/work/crew", None, "Main chat", None, None),
         ("branch", "/work/crew", None, "Branched", "p", "{}"),
         ("backfilled", None, None, None, "p", json.dumps({"_delegate_from": "p"})),
     ])
     db.commit()
+    (tmp_path / "profiles/factory").mkdir(parents=True)  # one gateway serves every profile
+    profile = sqlite3.connect(tmp_path / "profiles/factory/state.db")
+    profile.execute(table)
+    profile.execute("INSERT INTO sessions VALUES (?,?,?,?,?,?)",
+                    ("f", "/work/grove", None, "Factory run", None, None))
+    profile.commit()
     adapter = HermesAdapter(tmp_path)
     sessions, result = poll(
         adapter, clock, clock.event("pre_llm_call", session_id="p", turn_id="t1"),
@@ -106,8 +113,10 @@ def test_delegation_links_helpers_and_plain_parent_links_do_not(tmp_path, clock)
         clock.event("pre_llm_call", session_id="c", turn_id="c1"),
         clock.event("pre_llm_call", session_id="branch", turn_id="b1"),
         clock.event("pre_llm_call", session_id="backfilled", turn_id="x1"),
+        clock.event("pre_llm_call", session_id="f", turn_id="f1"),
     )
     assert sessions["p"].title == "Main chat"
+    assert (sessions["f"].title, sessions["f"].cwd) == ("Factory run", "/work/grove")
     assert (sessions["c"].parent_id, sessions["c"].title) == ("p", "researcher")
     assert sessions["backfilled"].parent_id == "p"  # restart: marker from the saved session
     assert sessions["branch"].parent_id is None  # a branch is its own session

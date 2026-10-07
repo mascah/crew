@@ -76,10 +76,12 @@ def test_hermes_plugin_install_and_removal(tmp_path):
     cfg = config.Config(hermes_home=str(tmp_path / "hermes"))
     assert install.hermes(cfg, remove=False, dry_run=False) == 0  # no Hermes here: skipped
     (tmp_path / "hermes/profiles/factory").mkdir(parents=True)
+    (tmp_path / "hermes/profiles/.deleted").mkdir()  # Hermes's own bookkeeping, not a profile
     install.hermes(cfg, remove=False, dry_run=False)
     plugin = tmp_path / "hermes/plugins/crew"
     assert {p.name for p in plugin.iterdir()} == {"__init__.py", "plugin.yaml"}
     assert (tmp_path / "hermes/profiles/factory/plugins/crew/plugin.yaml").exists()  # per profile
+    assert not list((tmp_path / "hermes/profiles/.deleted").iterdir())
     source = Path(plugin / "__init__.py").read_text()
     assert "from crew" not in source and "import crew" not in source  # runs inside Hermes
     install.hermes(cfg, remove=True, dry_run=False)

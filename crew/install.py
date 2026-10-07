@@ -102,7 +102,7 @@ def hermes(cfg: config.Config, remove: bool, dry_run: bool) -> int:
         print(f"skipped    hermes: {root} not found")
         return 0
     # Hermes loads plugins per profile: the default home and each named profile.
-    for home in [root, *sorted(p for p in (root / "profiles").glob("*") if p.is_dir())]:
+    for home in [root, *sorted(p for p in (root / "profiles").glob("[!.]*") if p.is_dir())]:
         target = home / "plugins" / "crew"
         print(f"{'remove' if remove else 'install'}    {target}")
         if dry_run:
