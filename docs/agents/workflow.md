@@ -1,8 +1,10 @@
 # Crew workflow
 
 Crew is a new project evolving the earlier Office project at
-`~/GitHub/mascah/office`. Crew's product scope and implementation stack have
-not yet been selected.
+`~/GitHub/mascah/office`. The initial product scope and collector direction are
+agreed in [the specification](../work/agent-activity/spec.md). The implementation
+stack has not yet been selected. Implementation is intended to continue from
+the MacBook; see [the handoff](../work/agent-activity/plan.md).
 
 ## Project references
 
@@ -49,15 +51,16 @@ rather than duplicating requirements in plans or tickets.
 
 | Role | GitHub label | Availability |
 | --- | --- | --- |
-| `needs-triage` | `needs-triage` | Proposed; not present |
+| `needs-triage` | `needs-triage` | Existing |
 | `needs-info` | `question` | Existing; requests further information |
-| `ready-for-agent` | `ready-for-agent` | Proposed; not present |
-| `ready-for-human` | `ready-for-human` | Proposed; not present |
+| `ready-for-agent` | `ready-for-agent` | Existing |
+| `ready-for-human` | `ready-for-human` | Existing |
 | `wontfix` | `wontfix` | Existing |
 
 Record states without an existing role label in the issue body until their
-labels are established. Setup records this mapping without creating labels
-or changing issue readiness remotely. Recheck labels before applying them.
+labels are established. Label availability above was checked on 2026-10-06;
+this update did not create labels or change issue readiness. Recheck labels
+before applying them.
 
 ## Checks
 
