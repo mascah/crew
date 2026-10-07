@@ -29,7 +29,7 @@ from crew.project import identify_cached
 log = logging.getLogger("crew.collector")
 BATCH = 50
 CHECKPOINT_EVERY = 30.0
-MAX_BACKOFF = 60.0
+MAX_BACKOFF = 30.0  # no longer than the stale threshold: a restarted service sees us within it
 
 
 class Outbox:
@@ -126,6 +126,8 @@ class Outbox:
 
 
 def http_upload(cfg: config.Config) -> Callable[[Report], ReportAck]:
+    # ponytail: a new connection per report (a TLS handshake from the MacBook, about
+    # 1.5% of a core while a session changes every poll); keep one open if that matters.
     def upload(report: Report) -> ReportAck:
         request = urllib.request.Request(
             cfg.service_url.rstrip("/") + "/api/ingest",

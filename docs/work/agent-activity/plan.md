@@ -30,16 +30,15 @@ the [Office review](../office-review/discovery.md) is predecessor research.
   approved disposable live probes on both Macs. Those probes and their measured
   evidence now exist; see the [validation report](validation.md) and
   [reproduction artifacts](probes/README.md).
-- Collectors, service and page are implemented in `crew/` and `web/` and pass
-  local checks; see [delivery status](#delivery-status). Nothing is installed
-  or deployed on either Mac yet.
+- Collectors, service and page are implemented in `crew/` and `web/` and are
+  deployed on both Macs; see [delivery status](#delivery-status).
 - Codex/Claude hosted or daemon lifecycle and same-helper resume cases were
   exercised on both Macs; direct Claude TUI continuation and manual approval
   cases also passed. Other wait variants and recovery paths remain
   unvalidated. Hermes current-source input observers were exercised in scratch
   on the Mini; Hermes was not installed on the MacBook.
-- Hermes can be updated if required for selected event support. No update has
-  been performed. Existing harness hooks/settings must be preserved.
+- Hermes on the Mini was updated on 2026-10-07 for the human-input observers.
+  Existing harness hooks/settings must be preserved.
 - Stack, SQLite storage/outboxes, private Tailscale Serve access restricted to
   the author's account, user-session startup, and freshness targets are selected
   in the spec. Current Mini Hermes and Tailscale are not unattended boot-time
@@ -78,14 +77,14 @@ are in the [implementation validation](validation.md#implementation-validation).
 
 | Increment | State |
 | --- | --- |
-| Validate collection | Built. Common model and all three adapters pass model-free fixtures; Claude and Codex were also run read-only over the MacBook's real records and through three bounded live probes. Hermes has fixture evidence only. |
-| Deliver a usable activity view | Built. Service, storage, access roles and the page pass `just check`; the built page was exercised in headless Chrome against demo and real local data at desktop, tablet and phone widths. No real phone or tablet has opened it. |
-| Join the two Macs | Installer and LaunchAgent definitions are written and unit-tested against temporary directories. **Not deployed**: no hooks, agents, Serve route or Hermes plugin exist on either Mac. Each is a change to the author's live setup and waits for their go-ahead. |
-| Record release evidence | Local evidence recorded. Two-Mac acceptance, startup/reboot, deployed performance and battery remain open. |
+| Validate collection | Built. Common model and all three adapters pass model-free fixtures; Claude and Codex were run read-only over the MacBook's real records; bounded live probes covered hosted Claude, standalone Codex, and one real Hermes turn on the Mini. |
+| Deliver a usable activity view | Built. Service, storage, access roles and the page pass `just check`; the built page was exercised in desktop Chrome against demo and real data at desktop, tablet and phone widths. No physical phone or tablet has opened it. |
+| Join the two Macs | Deployed with the author's approval: Mini service behind Tailscale Serve on HTTPS port 8787, collectors and hooks on both Macs, Hermes updated on the Mini with the observer plugin in each profile. See the [deployed checks](validation.md#deployed-two-mac-checks). |
+| Record release evidence | Recorded for the deployed setup except what is listed as [not yet shown](validation.md#what-is-not-yet-shown): reboot and SSH-only startup, Codex hook review, Hermes waits and delegation on real sessions, battery and sleep, and physical devices. |
 
-The table below still lists every release check. Rows whose fixture or storage
-evidence now exists (project identity, completion storage, replay and restart)
-are covered by automated tests; rows that need the deployed setup are open.
+The table below still lists every release check. Rows covered by automated
+tests or by the deployed checks are answered in the validation report; the
+items above remain open.
 
 ### Validate collection
 

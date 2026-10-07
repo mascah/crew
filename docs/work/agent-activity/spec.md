@@ -124,8 +124,8 @@ with access to the remaining retained entries and their final responses.
   intervals and a small collector prototype have now been measured on both Macs.
   Cold costs and the deployed collector's aggregate impact remain separate checks.
 - The author permits updating Hermes if needed for the required event support.
-  No active upgrade has been performed. The required generic wait observer
-  contract was exercised in the scratch revision recorded below.
+  The Mini's Hermes was updated on 2026-10-07 during delivery; the generic wait
+  observer contract had been exercised in the scratch revision recorded below.
 - Office is evidence for possible reuse. Its features, metrics, workflow,
   infrastructure, and implementation are not inherited automatically.
 - Collection sources, repository identity policy, and the Python/FastAPI plus

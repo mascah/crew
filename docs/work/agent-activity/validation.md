@@ -5,8 +5,8 @@ and disposable live validation on both Macs. The [specification](spec.md) owns
 behavior; this report owns experimental evidence and limits. Reproduction
 artifacts are in [probes](probes/README.md). The probe sections below predate the
 implementation; [implementation validation](#implementation-validation) records
-what the built collectors, service and page have since been shown to do. No
-active Hermes installation was upgraded.
+what the built collectors, service and page have since been shown to do,
+including the later Hermes update on the Mini.
 
 ## Saved-evidence review
 
@@ -210,12 +210,13 @@ experiments. Their storage and page acceptance checks remain in delivery.
 
 ## Implementation validation
 
-Recorded on 2026-10-07 against the working tree on the MacBook (`crew/`, `web/`,
-`tests/`). Four kinds of evidence are kept apart: automated fixtures, read-only
-runs over this Mac's real native records, bounded live probes, and local
-measurements. Nothing here was run on the Mini, and nothing was installed into
-either Mac's real harness settings; deployed two-Mac evidence is still owed (see
-[what is not yet shown](#what-is-not-yet-shown)).
+Recorded on 2026-10-07 for branch `implement-agent-activity` (`crew/`, `web/`,
+`tests/`). Five kinds of evidence are kept apart: automated fixtures, read-only
+runs over the MacBook's real native records, bounded live probes, local
+measurements, and [checks on the deployed two-Mac setup](#deployed-two-mac-checks).
+The first four were gathered before anything was installed; the last after the
+author approved deployment the same day. Open items are listed under
+[what is not yet shown](#what-is-not-yet-shown).
 
 ### Automated fixtures
 
@@ -323,19 +324,69 @@ Accepted limits from the same reviews, left as they are:
 - The page's rendering has no component tests; its grouping, filtering, paging
   and time logic do, and the rest was exercised in a browser.
 
+### Deployed two-Mac checks
+
+Deployed on 2026-10-07 with the author's approval, each Mac running from its own
+checkout under `~/Library/Application Support/Crew/app`.
+
+| Installed | Mac Mini | MacBook Pro |
+| --- | --- | --- |
+| Harnesses at the time | Claude Code `2.1.293`, Codex `0.161.0`, Hermes `v0.21.5+8877` at `865ba906` | Claude Code `2.1.293`, Codex `0.161.0`, no Hermes |
+| Crew | Service and collector LaunchAgents; hooks appended to Claude and Codex settings (originals kept as `.before-crew`); Hermes plugin in the default, `grove-factory` and `keyborg-factory` profiles | Collector LaunchAgent; hooks appended to Claude and Codex settings |
+| Serving | Tailscale Serve HTTPS port 8787 to the loopback service; the existing routes on 443, 9119 and 9999 were left as they were | Reports to that address |
+
+Hermes on the Mini was updated with `hermes update --backup` from `bd0affe5` to
+`865ba906`, which restarted its gateway and dashboard. The update printed one
+warning (`Failed to load bundled provider plugin solstice: No module named
+'httpx'`); the gateway and dashboard came back and a model turn ran afterwards.
+All eleven observers the plugin asks for, including the two human-input ones,
+were registered in each profile.
+
+| Check | Result |
+| --- | --- |
+| One view, two machines | Both Macs reported within seconds; sessions carried their machine, harness and project; 307 finished requests were backfilled from both. |
+| One repository, one project | The `crew` clones on both Macs resolved to one project, `github.com/mascah/crew`. |
+| Access | From the MacBook through Serve the page and API returned 200; a request with a forged `Tailscale-User-Login` header was still answered as the author (Serve replaces it); the loopback port without an identity returned 403. |
+| SSH-started Hermes on the Mini | `hermes chat --oneshot` started over SSH from the MacBook appeared under the Mini as working, then "Using terminal", with its folder; `CREW_HERMES_OK` was listed once and the session left. One short turn. |
+| SSH-started Claude on the Mini | `claude -p` started over SSH, with the Mini's installed hooks, appeared under the Mini as working with "Pause for 8 seconds" through an eight-second tool; `CREW_SSH_CLAUDE_OK` was listed once; the session left at its `SessionEnd`. Cost $0.1107. The journal held only whitelisted fields. |
+| Agents restart | `kill -9` of the Mini's collector and service: launchd restarted both and the page was current again within fifteen seconds, with retained requests intact. |
+| One collector per Mac | A second collector started by hand exited with "another Crew collector already owns this machine". |
+| A reporter stops | With the MacBook collector unloaded for 40 s the page marked it stale with its last-seen age while the Mini stayed current; reloading it restored it within ten seconds. |
+| Service outage | With the Mini service stopped for about three minutes the page was unreachable, the MacBook collector backed off (2, 4 ... 60 s), and after the restart both Macs were shown as last seen until their next report, then current. No finished request was duplicated. No request finished during the outage, so the queued-delivery path was not exercised live. |
+| Callbacks during the outage | 100 launches of the installed hook writer on the MacBook while reporting was failing: p50 1.8 ms, p95 3.4 ms, max 304 ms (the first). |
+
+Deployed measurements, each over one minute unless stated:
+
+| Measure | Mac Mini | MacBook Pro (on battery) |
+| --- | --- | --- |
+| Collector CPU | 0.7% of one core | 1.5% of one core, while one session changed on every poll and each report opened a new HTTPS connection |
+| Service CPU | 0.25% of one core | — |
+| Resident memory | Collector 43 MiB, service 58 MiB | Collector 44 MiB |
+| Hook writer, 200 launches | p50 1.5 ms, p95 1.6 ms, p99 1.7 ms, max 2.0 ms | See the local measurements above |
+| Adapter work per poll (profiled) | — | 7 ms of CPU; discovery of transcript files is the largest part |
+
+After that outage check the retry ceiling was lowered from 60 s to 30 s so that a
+restarted service sees each reporter within the stale threshold.
+
 ### What is not yet shown
 
-- **Deployment.** No hooks, LaunchAgents, Tailscale Serve route or Hermes plugin
-  have been installed on either Mac. Reporting from two machines, SSH-started
-  work, reboot/automatic login, SSH-only activation, sleep/reconnect and battery
-  impact are unexercised.
-- **Hermes.** The adapter and plugin pass fixtures built from the probe
-  contract. They have not run inside a managed Hermes installation; the Mini's
-  installed revision lacks the human-input observers (the page states that gap)
-  and the MacBook has no Hermes.
+- **Startup.** No reboot, logout or SSH-only session was tested. The agents are
+  loaded in the logged-in user's session; that they come back after a Mini
+  reboot with automatic login, or activate for an SSH-only session, remains a
+  configuration-based expectation.
+- **Codex hooks.** Codex asks the author to review newly added hooks before it
+  runs them; until then Codex sessions are observed from the daemon and rollouts
+  only, which is how every Codex result above was obtained.
+- **Hermes.** One real turn with a tool call was observed on the Mini. Hermes
+  human-input waits, delegation and resume have fixture evidence only, and the
+  MacBook has no Hermes.
+- **Battery and sleep.** One minute of CPU on battery is not a battery-impact
+  measurement; sleep and reconnect were not exercised.
+- **Devices.** The page was exercised in desktop Chrome at desktop, tablet and
+  phone widths; no physical phone or tablet has opened it.
 - **Claude wait variants.** TUI question/elicitation, denial and cancellation
   are covered by fixtures only.
 - **Codex.** Denial on the Mini and unsupported sub-source forms beyond
   `guardian_review` are unexercised; the latter stay unattached by design.
-- **Native callback intervals** with the production writer installed (the probe
-  figures above used the prototype writer) and cold-start cost on the Mini.
+- **Native callback intervals** as reported by the harnesses with the production
+  writer installed. The figures here time the writer process itself.

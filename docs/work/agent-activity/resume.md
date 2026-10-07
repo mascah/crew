@@ -8,24 +8,30 @@ Do not restart the product interview or repeat passing live probes.
 
 ## Implementation state
 
-- Branch `implement-agent-activity`; code in `crew/` and `web/`, tests in
-  `tests/`. `just setup`, `just check` and `just build` are the whole local loop;
-  the [README](../../../README.md#run-it) has configuration and install commands.
-- Built and locally validated: the observation model, Claude/Codex/Hermes
-  adapters, hook writer, collector with its outage queue, service with project
-  resolution and retention, and the page. See
-  [delivery status](plan.md#delivery-status).
-- **Not done:** nothing is installed on either Mac. Installing hooks into
-  `~/.claude/settings.json` and `~/.codex/hooks.json`, loading LaunchAgents,
-  adding a Tailscale Serve route on the Mini, installing the Hermes plugin and
-  updating Hermes all change the author's live setup and need their go-ahead.
-  The Mini's HTTPS ports 443, 9119 and 9999 are already served; 8787 is free and
-  is the port the README proposes.
+- Branch `implement-agent-activity`, pushed; not merged to `main`. Code in
+  `crew/` and `web/`, tests in `tests/`. `just setup`, `just check` and
+  `just build` are the whole local loop.
+- **Deployed on both Macs** on 2026-10-07. Each runs from its own checkout at
+  `~/Library/Application Support/Crew/app`, with `config.toml` (mode `600`,
+  holding that Mac's upload token) beside it. The page is the Mini's Tailscale
+  Serve address on HTTPS port 8787. Updating is `git pull`, `uv sync --no-dev`
+  (plus `just build` on the Mini) in that checkout, then rerunning the
+  `install` commands; see the [README](../../../README.md#run-it).
+- On the Mini, tools such as `uv`, `pnpm` and `hermes` are only on a login
+  shell's `PATH` (`zsh -lic` over SSH).
+- Hermes on the Mini was updated from `bd0affe5` to `865ba906` with its own
+  backup option; Crew's observer plugin is enabled in its three profiles.
+- Codex shows newly added hooks for the author's review before running them.
+  Until that is done on each Mac, Codex is observed from its daemon and
+  rollouts, which already gives state, waits and finished requests.
+- To remove everything: each `install` command takes `--remove`; the Serve route
+  goes with `tailscale serve --https=8787 off`; the original harness settings
+  are beside the edited ones as `.before-crew`.
+- Open release evidence is listed under
+  [what is not yet shown](validation.md#what-is-not-yet-shown).
 - Claude Code keeps a live-session registry under `~/.claude/sessions/` that the
   probes did not cover; the adapter uses it for interactive session state. See
   the [validation note](validation.md#a-further-claude-source-the-live-session-registry).
-- Local scratch runs used a separate `CREW_HOME`; the real
-  `~/Library/Application Support/Crew` does not exist yet on either Mac.
 
 ## Mandate and decisions
 
@@ -129,8 +135,8 @@ before reuse; use direct terminal control for its documented successful cases.
 ## Continue without another broad probe cycle
 
 Documentation review and the short verdict for each original question are
-complete, and the foundation review is settled. The next delivery pass deploys
-to both Macs when authorized and records release evidence. Use saved cases
+complete, the foundation review is settled, and the first version is deployed.
+The next pass closes the open release evidence. Use saved cases
 for regression evidence and targeted
 checks for the remaining gaps. Do not manufacture complete compatibility from
 passing cases.
