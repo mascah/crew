@@ -1,0 +1,4 @@
+name: crew
+version: 0.1.0
+description: Crew activity observer. Appends small local events; never calls the network.
+provides_hooks: true

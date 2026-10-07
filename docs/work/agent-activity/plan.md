@@ -29,8 +29,10 @@ the [Office review](../office-review/discovery.md) is predecessor research.
 - The author subsequently selected seven-day history and pixel avatars, and
   approved disposable live probes on both Macs. Those probes and their measured
   evidence now exist; see the [validation report](validation.md) and
-  [reproduction artifacts](probes/README.md). No production collector, server,
-  or page implementation exists.
+  [reproduction artifacts](probes/README.md).
+- Collectors, service and page are implemented in `crew/` and `web/` and pass
+  local checks; see [delivery status](#delivery-status). Nothing is installed
+  or deployed on either Mac yet.
 - Codex/Claude hosted or daemon lifecycle and same-helper resume cases were
   exercised on both Macs; direct Claude TUI continuation and manual approval
   cases also passed. Other wait variants and recovery paths remain
@@ -69,6 +71,22 @@ Use one implementation issue for the first version. These are increments within
 that work, not separate overlapping parent/child assignments. Each increment
 uses the [agreed acceptance](spec.md#acceptance-of-the-agreed-behavior).
 
+### Delivery status
+
+As of 2026-10-07, on branch `implement-agent-activity`. Evidence and its limits
+are in the [implementation validation](validation.md#implementation-validation).
+
+| Increment | State |
+| --- | --- |
+| Validate collection | Built. Common model and all three adapters pass model-free fixtures; Claude and Codex were also run read-only over the MacBook's real records and through three bounded live probes. Hermes has fixture evidence only. |
+| Deliver a usable activity view | Built. Service, storage, access roles and the page pass `just check`; the built page was exercised in headless Chrome against demo and real local data at desktop, tablet and phone widths. No real phone or tablet has opened it. |
+| Join the two Macs | Installer and LaunchAgent definitions are written and unit-tested against temporary directories. **Not deployed**: no hooks, agents, Serve route or Hermes plugin exist on either Mac. Each is a change to the author's live setup and waits for their go-ahead. |
+| Record release evidence | Local evidence recorded. Two-Mac acceptance, startup/reboot, deployed performance and battery remain open. |
+
+The table below still lists every release check. Rows whose fixture or storage
+evidence now exists (project identity, completion storage, replay and restart)
+are covered by automated tests; rows that need the deployed setup are open.
+
 ### Validate collection
 
 Implement the common observation shape and adapters from the
@@ -81,8 +99,7 @@ observable interfaces, including delivered-response recovery.
 Begin with model-free replay and controlled fixtures. A new live case needs a
 specific evidence gap, bounded run, and stated usage cost; do not rerun the
 passing matrix by default. Preserve existing hooks, active sessions, credentials,
-and review/trust flows. The production implementation is future work outside
-this documentation pass.
+and review/trust flows.
 
 ### Remaining implementation and release checks
 

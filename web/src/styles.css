@@ -1,0 +1,564 @@
+/* Text carries the meaning; colour, avatars and motion only support it. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f5f4ef;
+  --surface: #ffffff;
+  --ink: #1d1c1a;
+  --muted: #5d5a52;
+  --line: #dcd9d0;
+  --focus: #1a56db;
+  --claude: #c2541b;
+  --codex: #0d7a6f;
+  --hermes: #6b46c8;
+  --working: #1a7f3c;
+  --waiting: #b4580a;
+  --waiting-tint: #fdf1dc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131312;
+    --surface: #1c1c1a;
+    --ink: #eceae4;
+    --muted: #a8a59b;
+    --line: #36352f;
+    --focus: #8ab4ff;
+    --claude: #f0894a;
+    --codex: #45c9b8;
+    --hermes: #ab8ef7;
+    --working: #4fd67f;
+    --waiting: #f5b83d;
+    --waiting-tint: #33270f;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 1rem/1.45 system-ui, sans-serif;
+}
+
+/* The page behind an open response stays put. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+button,
+select {
+  min-height: 2rem;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.quiet,
+.meta,
+.showing {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.meta {
+  overflow-wrap: anywhere;
+}
+
+/* Each item wraps as a unit and only breaks inside when it outgrows the line. */
+.meta span {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.meta span:not(:last-child)::after {
+  content: '·';
+  margin: 0 0.4em;
+}
+
+/* --- header and freshness --- */
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.top h1 {
+  font: 700 1.25rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.top a {
+  margin-left: auto;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+.link {
+  font-size: 0.875rem;
+}
+
+.link.live::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.4rem;
+  background: var(--working);
+}
+
+/* Not live is a banner: what follows is retained, not current. */
+.link.loading,
+.link.lost {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--waiting);
+  border-radius: 6px;
+  background: var(--waiting-tint);
+}
+
+/* --- layout --- */
+
+.columns {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.columns > section > h2 {
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 1000px) {
+  .columns {
+    grid-template: auto 1fr / minmax(0, 5fr) minmax(0, 3fr);
+    align-items: start;
+  }
+
+  .finished {
+    grid-area: 1 / 2 / span 2;
+  }
+
+  .top a {
+    display: none; /* the finished list is already beside the activity */
+  }
+}
+
+/* --- machines --- */
+
+.machines > ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.machines > ul > li {
+  flex: 1 1 16rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.875rem;
+}
+
+.machines > ul > li.stale {
+  border-left-color: var(--waiting);
+}
+
+.machines > ul > li:not(.stale) > span {
+  color: var(--muted);
+}
+
+.problems {
+  margin-top: 0.25rem;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  list-style: disc;
+  overflow-wrap: anywhere;
+}
+
+/* --- grouping and filters --- */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.controls label {
+  display: grid;
+  gap: 0.125rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.controls select {
+  width: 100%;
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+
+.controls select.on {
+  border-color: var(--ink);
+  font-weight: 600;
+}
+
+.showing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  margin-top: 0.5rem;
+}
+
+.chip {
+  border-color: var(--ink);
+  border-radius: 999px;
+  color: var(--ink);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.group {
+  margin-top: 1rem;
+}
+
+.group h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+.group h3 small {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+/* --- sessions --- */
+
+.sessions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.session {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+/* Waiting is the one state that asks for the author: marked, but still. */
+.session.waiting {
+  border-left-color: var(--waiting);
+}
+
+.session.claude {
+  --accent: var(--claude);
+}
+
+.session.codex {
+  --accent: var(--codex);
+}
+
+.session.hermes {
+  --accent: var(--hermes);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  margin-top: 0.125rem;
+  fill: var(--accent);
+}
+
+.session.idle > .avatar {
+  opacity: 0.55;
+}
+
+.session.unknown > .avatar,
+.session.last > .avatar {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .session.working > .avatar {
+    animation: bob 1.6s steps(1) infinite;
+  }
+}
+
+/* Two frames: down, then up. */
+@keyframes bob {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.125rem 0.75rem;
+}
+
+.title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.state {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.state::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.375rem;
+  border: 1.5px solid var(--muted);
+}
+
+.state.working::before {
+  border-color: var(--working);
+  background: var(--working);
+}
+
+.state.waiting {
+  padding: 0 0.375rem;
+  border-radius: 4px;
+  background: var(--waiting-tint);
+}
+
+.state.waiting::before {
+  border-color: var(--waiting);
+  background: var(--waiting);
+}
+
+.state.idle,
+.state.unknown,
+.state.last {
+  color: var(--muted);
+}
+
+.state.unknown::before {
+  border-style: dashed;
+}
+
+.state.last {
+  font-weight: 400;
+}
+
+.doing,
+.gap {
+  overflow-wrap: anywhere;
+}
+
+.gap {
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  border-left: 2px dashed var(--line);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.toggle {
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.toggle::before {
+  content: '▸ ';
+}
+
+.toggle[aria-expanded='true']::before {
+  content: '▾ ';
+}
+
+/* Helpers sit inside their parent's card; each nested level indents again. */
+.helpers {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--line);
+}
+
+.helpers .session {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.helpers .avatar {
+  width: 24px;
+  height: 24px;
+}
+
+/* --- recently finished requests --- */
+
+.requests {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.requests > li {
+  position: relative;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.requests > li:hover {
+  border-color: var(--muted);
+}
+
+.requests h3 button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+/* The whole card opens the response; the title stays the one named control. */
+.requests h3 button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.excerpt {
+  display: -webkit-box;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.more {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+dialog {
+  width: min(820px, 100vw - 1.5rem);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: calc(100dvh - 1.5rem);
+  padding: 1rem;
+}
+
+.sheet header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheet h2 {
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+
+.sheet pre {
+  min-height: 0;
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font: 0.875rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 0.75rem;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

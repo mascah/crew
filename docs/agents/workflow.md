@@ -6,8 +6,8 @@ agreed in [the specification](../work/agent-activity/spec.md). The selected stac
 is Python/FastAPI with React/TypeScript/Vite. Storage/recovery, private access,
 user-session startup and freshness are selected in the
 [implementation foundations](../work/agent-activity/spec.md#implementation-foundations).
-Implementation is intended to continue from
-the MacBook; see [the handoff](../work/agent-activity/plan.md).
+The application lives in `crew/` (collectors, adapters, service) and `web/`
+(the page); see [the handoff](../work/agent-activity/plan.md) for delivery state.
 
 ## Project references
 
@@ -73,15 +73,20 @@ before applying them.
 
 ## Checks
 
-Crew currently contains documentation and disposable collection probes, with no
-production application, build, lint, or test commands configured. The
-[probe README](../work/agent-activity/probes/README.md) owns their run commands and
-validation limits; live model runs require the caller's authorized probe scope.
-For documentation changes, review the
-diff, verify instruction pointers and document links, and run
-`git diff --check`. Check new untracked files as well, since they are absent
-from the normal diff. Add concrete project commands here when the stack is
-chosen; Office's tests currently validate Office.
+Run `just check` before handing over a change: Ruff, the Python tests, the
+page's type-check and unit tests, and the generated API contract. `just build`
+builds the page that the service serves; `just setup` installs the pinned
+dependencies. The [README](../../README.md#develop) lists the tools needed.
+
+Tests exercise behavior through the adapters' `poll`, the collector's `tick`,
+and the service's HTTP API, using synthetic native records shaped like the
+saved evidence. They request no model turns and read no real session data.
+Live harness runs remain separate evidence: the
+[probe README](../work/agent-activity/probes/README.md) owns the disposable
+probes, and a new live case needs a specific gap, a bounded run, and a stated
+usage cost. For documentation changes, review the diff, verify instruction
+pointers and document links, and run `git diff --check`. Check new untracked
+files as well, since they are absent from the normal diff.
 
 ## Isolation, commits, and execution
 

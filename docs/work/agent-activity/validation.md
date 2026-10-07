@@ -3,8 +3,10 @@
 Live probes run on 2026-10-06 after the author selected seven-day history, pixel avatars,
 and disposable live validation on both Macs. The [specification](spec.md) owns
 behavior; this report owns experimental evidence and limits. Reproduction
-artifacts are in [probes](probes/README.md). No production collector or page was
-built, and no active Hermes installation was upgraded.
+artifacts are in [probes](probes/README.md). The probe sections below predate the
+implementation; [implementation validation](#implementation-validation) records
+what the built collectors, service and page have since been shown to do. No
+active Hermes installation was upgraded.
 
 ## Saved-evidence review
 
@@ -205,3 +207,135 @@ remotes combined. The fixture does not validate every provider's URL rules.
 History and visual direction are design selections in the
 [specification](spec.md#recent-history), rather than outcomes proved by these
 experiments. Their storage and page acceptance checks remain in delivery.
+
+## Implementation validation
+
+Recorded on 2026-10-07 against the working tree on the MacBook (`crew/`, `web/`,
+`tests/`). Four kinds of evidence are kept apart: automated fixtures, read-only
+runs over this Mac's real native records, bounded live probes, and local
+measurements. Nothing here was run on the Mini, and nothing was installed into
+either Mac's real harness settings; deployed two-Mac evidence is still owed (see
+[what is not yet shown](#what-is-not-yet-shown)).
+
+### Automated fixtures
+
+`just check` runs 91 Python tests plus the page's type-check, unit tests and API
+contract check. All are model-free and use controlled clocks, temporary
+directories, disposable Git repositories, a scripted Unix WebSocket server in
+place of the Codex daemon, and the real FastAPI application through its HTTP
+interface.
+
+| Area | Tests | What they establish |
+| --- | ---: | --- |
+| Project identity | 16 | Worktrees share a project and clones join through one recognized origin; SSH and HTTPS spellings of the same host normalize together. A fork with an upstream remote, another owner's same-named repository, SSH aliases, non-default ports, local/file remotes, multiple origin URLs, a missing origin and a non-repository folder all stay distinct; a submodule is its own project. A removed worktree folder still resolves to its repository; a remote under a personal SSH user (`alice@host:repo`) stays local. |
+| Hook journal | 5 | The compiled writer keeps only whitelisted top-level metadata, prints the neutral result for malformed or empty input, and turns a write failure into a recorded observation error rather than a hook failure; an eight-process burst loses nothing and is read incrementally; a partial last line waits, compaction resets the offset, and a raw newline or a non-record line cannot split or stop the reader. |
+| Claude adapter | 16 | TUI settlement on `turn_duration`; hosted settlement on the stop summary plus session end, next prompt or quiet period; a blocked stop followed by continuation yields one completion with the later response; interruption, API failure and exit yield none; replay after restart does not duplicate. A permission prompt and a question open a wait and later evidence closes it, while `idle_prompt` does not; helpers nest by native agent ID (including a nested helper) and a resumed helper stays one entry; the live registry is authoritative for TUI state; a session with no liveness evidence is marked with its gap and becomes unknown, never idle; an unreadable transcript is reported while the rest continue. A response with no settling record (older TUIs, sessions without stop hooks) finishes after a quiet period and is replaced if a slow stop hook continues it; a helper that hands back its report is idle without a stop hook; a helper still running when the author sends another prompt stays listed; unexpected record or registry shapes cost one record, not the adapter. |
+| Codex adapter | 18 | Daemon status maps to working/waiting/idle; rollouts give activity text and one completion per finished turn; aborted or empty turns give none; policy callbacks are not human waits; helpers attach only through an evidenced spawn parent; work outside the daemon is shown with an explicit gap; daemon loss is a stated gap while records still settle; replay after restart does not duplicate; the daemon client sends only read requests. A session spread over several rollout files, and a forked helper whose rollout repeats its parent's header, keep their own identity and every settled turn; one unreadable daemon thread does not blank the rest. |
+| Hermes adapter and plugin | 8 | Turn open/close with a paired human-input wait; failed, interrupted and unfinished turns give no completion; delegated helpers nest under their parent while a plain parent link does not; the missing-observer gap is reported; sessions of a dead process leave; the plugin writes only bounded fields and never raises into Hermes. |
+| Collector | 15 | One failing adapter does not blank the others; completions stay queued through a service outage and are delivered once; a lost acknowledgment replays without duplicates; the read checkpoint commits with the completions it covers; failed reports back off without stopping collection; queue age/count/size limits drop oldest with a visible count; backfill older than retention is skipped without being reported as loss; an unchanged machine stays fresh through heartbeats; a second collector on one machine refuses, or waits when started as a standby; real adapters through the real service group two checkouts of one repository as one project. A poll that fails after reading records is retried from the last saved checkpoint, including its journal events and across a restart; a later settlement replaces the queued one; text cut mid-character is still stored and sent. |
+| Service | 9 | Viewer and collector roles are separate and a collector token reports only for its own machine; helpers nest under evidenced parents; a silent machine is shown as last seen, not current; completions deduplicate by request identity; seven-day and 1,000-entry retention; newest twenty first with every retained response openable; retained entries survive a service restart; an upload is refused before its body is read unless it carries a collector credential; one repository is one project across machines; identity survives a remote change and explicit mappings win; outage-queue losses are shown per machine, counted once under replay and only within the history window. |
+| Installer | 4 | Hook entries are added beside existing ones, a repeated install changes nothing, removal restores the original file, no routine tool or policy-callback hooks are added, the installed command runs and writes only whitelisted fields, and the Hermes plugin installs and removes. A symlinked settings file stays a link with its mode; a neighbouring hook in the same entry survives removal; a mistyped setting is refused. |
+
+### Read-only runs over real records
+
+The adapters were pointed at this Mac's real `~/.claude` and `~/.codex` through a
+scratch collector and loopback service with a scratch data directory. They read
+only; no harness setting was changed.
+
+| Observation | Result |
+| --- | --- |
+| First scan (seven days of records) | Claude 0.34 s, Codex 0.36 s; 156 finished requests recovered after the review fixes below (149 before them), each with a unique request ID. |
+| Steady poll | Claude about 0.3 ms, Codex about 1.9 ms per two-second poll. |
+| Live sessions | The implementing Claude session was shown working with its helper nested beneath it; a second Claude session and three daemon-loaded Codex threads were shown idle. |
+| State tracking | A sampler compared Claude's live registry with Crew's reported state once a second: every observed `busy`/`idle`/`waiting` change, and each short-lived session that appeared and left, was reflected within one to two seconds. |
+| Saved probe transcripts | Replayed through the adapter and service: neither `CREW_FIRST_STOP` (a blocked stop) nor `CREW_SHOULD_BE_INTERRUPTED` was listed as finished. |
+
+### A further Claude source: the live-session registry
+
+Claude Code `2.1.293` keeps one small file per running interactive session under
+`~/.claude/sessions/<pid>.json` with `sessionId`, `pid`, `cwd`, `entrypoint`,
+`status` (`busy`, `idle`, `waiting`), `waitingFor` and `statusUpdatedAt`. The
+adapter treats it as the authority for an interactive session's current state
+when the file exists and its process is alive, and falls back to transcript and
+hook evidence otherwise (hosted sessions have no entry). This was found during
+implementation and is not part of the earlier probe matrix. All three values were
+observed live: `busy` and `idle` across turns, and `waiting` with
+`waitingFor: "input needed"` while a question dialog was open, which Crew showed
+as waiting within the same one-second sample and as working two seconds after
+the answer. Permission dialogs were not sampled this way. It is an undocumented
+file: if it is absent or its
+shape changes, the adapter uses the hook and transcript path that the probes
+validated.
+
+### Bounded live probes
+
+Each filled one stated gap, ran once, and used the production hook writer through
+invocation-only settings (`--setting-sources ''` plus `--settings`), leaving the
+user's own settings untouched.
+
+| Gap | Run | Result | Cost |
+| --- | --- | --- | --- |
+| Hosted Claude through the built adapter | One prompt with an eight-second tool call | Shown working with its activity text throughout; one finished request, `CREW_HOSTED_OK`; the journal held only whitelisted fields. | $0.0231 |
+| Hosted Claude stop-hook continuation | One prompt whose first stop is blocked | Only `CREW_SECOND_STOP` was listed as finished. | $0.0111 |
+| Standalone `codex exec` outside the daemon | One short run | The daemon's loaded list did not change; the session was shown working with the stated gap that liveness and human waits are not observed outside the daemon, its activity appeared, `CREW_CODEX_EXEC_OK` was listed once, and the session left the view afterwards. | 6,635 tokens |
+
+### Local measurements
+
+Measured on the MacBook on AC power; these are not deployed figures.
+
+| Measure | Result |
+| --- | --- |
+| Production hook writer, 200 launches with a 20 kB payload | p50 1.8 ms, p95 2.6 ms, p99 4.7 ms; the first launch after building took 232 ms. |
+| Collector process | About 57 MiB resident, 0–1% of one core at a two-second poll. |
+| Service process | About 57–84 MiB resident, under 1% of one core with one page open. |
+| Journal burst | Writers take a shared lock with a 5 ms bounded retry; the eight-process burst test passed 30 consecutive suite runs. |
+
+### Independent review
+
+Two independent reviews read the whole change against the specification on
+2026-10-07, one over the collector, service, hook writer and installer and one
+over the adapters and page, each confirming findings with scripts it ran. The
+defects they confirmed are fixed, each with a regression test counted above:
+
+- A poll that failed after reading records could save its advanced checkpoint
+  and lose finished requests; the outage queue kept the first of two settlements
+  of one request; one malformed journal line could stop the collector.
+- Codex sessions spread over several rollout files, and forked helpers, lost
+  settled turns or showed a helper's turn as the author's (seen in this Mac's
+  real records: four undelivered completions).
+- Claude sessions that never write `turn_duration` (2.1.266, seen in real
+  records) or a stop summary produced no finished requests.
+- The installer replaced a symlinked settings file, widened its mode, and could
+  remove a neighbouring hook; the loss counter double-counted on replay; the
+  page's finished list could leave an unloadable gap after a long absence.
+
+Accepted limits from the same reviews, left as they are:
+
+- The viewer check trusts the identity header Tailscale Serve adds. A process
+  already running as the author on the Mini can send that header to the loopback
+  port; it can also read the database file directly.
+- A checkout first seen without a usable origin stays its own project when an
+  origin is added later, until mapped with `crew project`. This is the selected
+  "a changed remote never rewrites history" rule.
+- A hosted Claude session, or a Codex session outside the daemon, that is killed
+  without a session-end callback keeps its last state for up to twelve hours
+  with a stated gap; a long tool and a killed process look the same there.
+- The page's rendering has no component tests; its grouping, filtering, paging
+  and time logic do, and the rest was exercised in a browser.
+
+### What is not yet shown
+
+- **Deployment.** No hooks, LaunchAgents, Tailscale Serve route or Hermes plugin
+  have been installed on either Mac. Reporting from two machines, SSH-started
+  work, reboot/automatic login, SSH-only activation, sleep/reconnect and battery
+  impact are unexercised.
+- **Hermes.** The adapter and plugin pass fixtures built from the probe
+  contract. They have not run inside a managed Hermes installation; the Mini's
+  installed revision lacks the human-input observers (the page states that gap)
+  and the MacBook has no Hermes.
+- **Claude wait variants.** TUI question/elicitation, denial and cancellation
+  are covered by fixtures only.
+- **Codex.** Denial on the Mini and unsupported sub-source forms beyond
+  `guardian_review` are unexercised; the latter stay unattached by design.
+- **Native callback intervals** with the production writer installed (the probe
+  figures above used the prototype writer) and cold-start cost on the Mini.
