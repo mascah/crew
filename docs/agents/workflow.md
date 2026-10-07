@@ -37,15 +37,18 @@ These are defaults for new work; create documents when useful.
 
 | Purpose | Location |
 | --- | --- |
-| Discovery and research | `docs/work/<effort>/discovery.md` and supporting evidence |
-| Specification | `docs/work/<effort>/spec.md` |
-| Optional implementation plan | `docs/work/<effort>/plan.md` |
-| Local ticket drafts, when needed | `docs/work/<effort>/tickets.md` |
+| Discovery and research | `docs/work/<yymmdd>-<effort>/discovery.md` and supporting evidence |
+| Specification | `docs/work/<yymmdd>-<effort>/spec.md` |
+| Optional implementation plan | `docs/work/<yymmdd>-<effort>/plan.md` |
+| Local ticket drafts, when needed | `docs/work/<yymmdd>-<effort>/tickets.md` |
 | Domain terms | `GLOSSARY.md` |
 | Consequential decisions | `docs/adr/` |
 
 Keep related work together and follow links to the canonical specification
 rather than duplicating requirements in plans or tickets.
+Name a new effort folder with its creation date as `YYMMDD-<effort>`, for
+example `261007-agent-activity`; later documents for that effort join the
+existing folder. Existing undated folders stay as they are.
 
 ## Tracking
 
