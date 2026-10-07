@@ -1,5 +1,9 @@
 # Crew: current agent activity and recent completions
 
+Implementation tracking: [mascah/crew#1](https://github.com/mascah/crew/issues/1).
+This specification owns scope and acceptance; issue #1 tracks delivery of the
+whole specification, using the linked implementation plan.
+
 Status: the six original questions have selected design answers in the
 [decision review](#reviewed-decisions-for-issue-1). The author selected Python/
 FastAPI and React/TypeScript/Vite on 2026-10-07. Storage/recovery, private access,
