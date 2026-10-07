@@ -1,5 +1,11 @@
 # Implementation handoff: agent activity
 
+Start with [resume.md](resume.md) for the local working-tree state and saved
+evidence pointers. The six original decisions are reviewed in the
+[specification](spec.md#reviewed-decisions-for-issue-1). The stack and operating
+choices are settled in the [foundations](spec.md#implementation-foundations).
+Remaining work is implementation and release validation.
+
 The [specification](spec.md) owns product behavior and acceptance. This document
 owns the implementation sequence and the context needed to continue from the
 MacBook. The [collection investigation](discovery.md) records existing evidence;
@@ -9,30 +15,53 @@ the [Office review](../office-review/discovery.md) is predecessor research.
 
 - Initial product scope, project meaning, expandable subagents, collector
   arrangement, and observation-hook design are agreed.
+- All six shaping questions have selected answers. Remaining empirical coverage
+  and performance work is listed separately below; it does not require another
+  product interview.
+- The author selected Python/FastAPI and React/TypeScript/Vite, with
+  `platform-django` as a tooling reference. Storage/outage recovery, serving/
+  access and freshness defaults are accepted. Startup is selected to match
+  existing harness user sessions, including graphical and SSH/background
+  contexts. The author review checkpoint is complete; the six original
+  decisions remain intact.
 - The author intends to move implementation to the MacBook. Only the MacBook
   can SSH into the Mini; reverse SSH access is not available.
-- Runtime/probe checks were deferred by the author during the Mini handoff.
-  No prototype, collector, hook script, server, or page implementation exists.
-- No performance benchmark, live harness integration check, or MacBook
-  installation/source check has been run. Source observations are from the Mini.
+- The author subsequently selected seven-day history and pixel avatars, and
+  approved disposable live probes on both Macs. Those probes and their measured
+  evidence now exist; see the [validation report](validation.md) and
+  [reproduction artifacts](probes/README.md). No production collector, server,
+  or page implementation exists.
+- Codex/Claude hosted or daemon lifecycle and same-helper resume cases were
+  exercised on both Macs; direct Claude TUI continuation and manual approval
+  cases also passed. Other wait variants and recovery paths remain
+  unvalidated. Hermes current-source input observers were exercised in scratch
+  on the Mini; Hermes was not installed on the MacBook.
 - Hermes can be updated if required for selected event support. No update has
   been performed. Existing harness hooks/settings must be preserved.
-- No implementation language, frontend framework, database, or tailnet serving
-  mechanism has been selected. Choose these during implementation from the
-  accepted scope and evidence; Office's stack is not a requirement.
+- Stack, SQLite storage/outboxes, private Tailscale Serve access restricted to
+  the author's account, user-session startup, and freshness targets are selected
+  in the spec. Current Mini Hermes and Tailscale are not unattended boot-time
+  daemons, but the Mini has automatic login configured with FileVault off;
+  expect user-session services to start after reboot without a manual login.
+  Preserve that setup; a future change to boot services is separate.
+  Office's implementation is not inherited by selecting these approaches.
 
 ## Start from the MacBook
 
-1. Pull the Crew repository's `main` branch and read the specification and this
-   handoff. Use the published implementation issue as a pointer to the usable
-   revision, rather than treating an issue summary as the requirements owner.
+1. Read the specification, validation report, and this handoff at the usable
+   revision linked by [issue #1](https://github.com/mascah/crew/issues/1). The
+   checkpoint contains the settled decisions and retained probe evidence;
+   earlier revision `c3a9d7d` predates them. The specification owns requirements,
+   and this plan owns delivery. Inspect the current working tree and preserve
+   any later partial work before beginning implementation.
 2. Inspect the MacBook's installed harness versions, data/config locations, and
    existing hook setup. Recheck the Mini from the MacBook through the existing
    SSH access when remote checks are needed. Keep secrets and raw private
    conversations out of committed evidence.
-3. Choose a small implementation stack and begin with the collection/lifecycle
-   path. Source-backed candidates already exist, so a new product interview is
-   not required. Record source mismatches and unresolved coverage explicitly.
+3. Use the [selected foundations](spec.md#implementation-foundations)
+   and their operating behavior before beginning the
+   collection/lifecycle path. Evidence-backed source selections already exist;
+   record source mismatches and unresolved coverage explicitly.
 
 ## Delivery sequence
 
@@ -42,24 +71,42 @@ uses the [agreed acceptance](spec.md#acceptance-of-the-agreed-behavior).
 
 ### Validate collection
 
-Establish a common observation shape and native identity mapping for the three
-harnesses. Validate parent/child membership, current activity, human waits,
-finished requests, interruption, continuation, and response recovery. Preserve
-the distinction between request outcomes, session lifetime, and report freshness.
+Implement the common observation shape and adapters from the
+[reviewed source and identity decisions](spec.md#reviewed-decisions-for-issue-1).
+Preserve request outcomes, session lifetime, and report freshness as distinct
+facts. Saved passing cases are inputs for adapter regression checks; they do not
+prove that the adapter itself works. Reconcile selected sources through Crew's
+observable interfaces, including delivered-response recovery.
 
-Start with controlled fixtures and replay of representative native records,
-labeling simulated evidence clearly. Exercise actual hook integration and
-representative work on the installed versions as implementation progresses.
-Measure local callback latency and collector resource use on both Macs; keep
-networking in the collector. A lightweight emitter measurement alone does not
-measure harness serialization, interpreter startup, or the entire callback path.
+Begin with model-free replay and controlled fixtures. A new live case needs a
+specific evidence gap, bounded run, and stated usage cost; do not rerun the
+passing matrix by default. Preserve existing hooks, active sessions, credentials,
+and review/trust flows. The production implementation is future work outside
+this documentation pass.
 
-The Mini has candidate child identity fields in Codex rollout metadata, Claude
-subagent transcript placement, and Hermes delegation metadata/hooks. The
-investigation also records a Hermes documentation/installed-version mismatch for
-generic human-input hooks. Resolve these from current sources and runtime
-evidence; update Hermes if necessary. Do not infer successful completion from
-quiet output or a stop hook that another hook can continue.
+### Remaining implementation and release checks
+
+These gates demonstrate selected behavior; they are not unresolved product
+decisions. Use the [report](validation.md) for the exact tested surface/version
+and its limits. Recheck compatibility when a binary or integration changes.
+
+| Area | Remaining check | Required evidence |
+| --- | --- | --- |
+| Codex surfaces | Standalone CLI/`codex exec` outside the shared daemon; unsupported structured subagent source forms. | Version-specific observations establish activity, actual waits, liveness, settlement, and response recovery for each supported surface. Unavailable daemon status remains an explicit gap; no observation method resumes work. Mini denial coverage is still absent. |
+| Claude waits and outcomes | TUI questions/elicitation, denial/cancellation, interruption, API failure, network/other permission variants, and wait correlation. | Actual wait opening and closure are distinguished from policy callbacks and `idle_prompt`; terminal evidence excludes partial/interrupted requests. Hosted `result` and TUI `turn_duration` are checked separately. |
+| Hermes package compatibility | Update the Mini and install on the MacBook with the tested generic human-input observer contract; check approval/sudo and non-submitted outcomes, continuation/interruption, and helper resume. | Verify loaded package paths, observer presence, profile discovery, paired IDs/outcomes, and request boundaries on both Macs. The scratch source/dependency experiment is not a managed-package result or a supported version range. |
+| Relationships and recovery | Multiple/nested/background helpers; restart while active; sessions already running before hook installation; profile-specific discovery; duplicate/delayed events and record truncation/replacement. | Replay and adapter checks retain one entry per native agent, evidenced parent links, and one final response per settled request. Targeted live cases fill only missing lifecycle evidence. |
+| Project identity | Implement the selected policy beyond the simple GitHub fixture: forks, multiple/missing origins, SSH aliases, local remotes, moved repositories, submodules, explicit overrides, and offline cached mappings. | Model-free Git/config fixtures group intended clones/worktrees, keep ambiguous cases distinct, and preserve history identity when mappings/remotes change. |
+| Completion storage | Retention expiry/cap, initial list and access to remaining responses, replay/reconnect deduplication, delayed uploads, and service restart. | Controlled-clock/storage checks through the service satisfy the [history acceptance](spec.md#acceptance-of-the-agreed-behavior); native histories remain untouched. |
+| Deployed performance | Cold activation; full native callback path with observation on/off; history scans, storage, concurrency/backlog, upload retries, service outage, sleep/reconnect, and MacBook battery impact. | Report sample count, p50/p95/p99/max, cumulative delay, CPU/peak memory/I/O and recovery behavior on both Macs. Compare warm callbacks with the selected targets; report cold costs separately. AC-powered replay/prototype figures do not establish battery impact. |
+| Page and two-machine delivery | Actual collector-to-service reporting, SSH execution attribution, stale reporters/adapter errors, final-response reading, stable pixel avatars, narrow layouts, and reduced motion. | Exercise the agreed acceptance on the deployed two-Mac setup and desktop/tablet/phone layouts using the stack, storage and serving choices selected in the foundation review. Exact character artwork can follow during page design. |
+| User-session startup | Mini reboot followed by its configured automatic login, graphical and SSH-only/background activation, logout/relogin, crashes/restarts, and collecting while Tailscale/reporting is unavailable. | Verify one collector per machine across session types, recovery from native records/local outboxes, and service readiness once its user session and network are available. A `Background` plist declaration or automatic-login preference alone is not runtime evidence. Reboot/logout tests require a bounded operational window; boot before any user session is not promised. |
+
+Record passing, failing, unsupported, and unexercised cases separately. Release
+requires evidence for the promised behavior across both Macs and all three
+harnesses; a missing signal must stay visible until resolved. Native probes,
+synthetic replay, adapter checks, and deployed measurements are different kinds
+of evidence and must remain labeled as such.
 
 ### Deliver a usable activity view
 
@@ -68,8 +115,8 @@ page, including project grouping, expandable helpers, and recent request
 responses. Validate the agreed behavior through the observable interfaces. Keep
 the interfaces independent of Bench and harness-specific names/tool schemas.
 
-Choose bounded/configurable recent-history defaults during implementation and
-document them. Artwork and subtle motion can follow the readable presentation;
+Use the selected recent-history defaults in the specification. Pixel avatar
+artwork and subtle motion can follow the readable presentation;
 they do not gate a usable first view.
 
 ### Join the two Macs

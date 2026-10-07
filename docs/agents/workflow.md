@@ -2,8 +2,11 @@
 
 Crew is a new project evolving the earlier Office project at
 `~/GitHub/mascah/office`. The initial product scope and collector direction are
-agreed in [the specification](../work/agent-activity/spec.md). The implementation
-stack has not yet been selected. Implementation is intended to continue from
+agreed in [the specification](../work/agent-activity/spec.md). The selected stack
+is Python/FastAPI with React/TypeScript/Vite. Storage/recovery, private access,
+user-session startup and freshness are selected in the
+[implementation foundations](../work/agent-activity/spec.md#implementation-foundations).
+Implementation is intended to continue from
 the MacBook; see [the handoff](../work/agent-activity/plan.md).
 
 ## Project references
@@ -19,6 +22,9 @@ the MacBook; see [the handoff](../work/agent-activity/plan.md).
 - Office's code is in `../office/office.py` and `../office/office.html` relative
   to Crew's repository root. Its Bench contract and delivery records live in
   `../office/docs/blueprint/` and `../office/docs/plan/`.
+- Tooling reference selected by the author: `~/GitHub/mascah/platform-django`.
+  Consult its Python/JavaScript tooling and generated-client patterns as useful;
+  adapt them to the selected Crew stack. Django-specific setup is outside Crew.
 
 Use Office to understand prior behavior and choices. Record which of those
 Crew adopts when shaping its scope; Office's frozen release requirements,
@@ -64,8 +70,11 @@ before applying them.
 
 ## Checks
 
-Crew currently contains documentation only, with no application, build,
-lint, or test commands configured. For documentation changes, review the
+Crew currently contains documentation and disposable collection probes, with no
+production application, build, lint, or test commands configured. The
+[probe README](../work/agent-activity/probes/README.md) owns their run commands and
+validation limits; live model runs require the caller's authorized probe scope.
+For documentation changes, review the
 diff, verify instruction pointers and document links, and run
 `git diff --check`. Check new untracked files as well, since they are absent
 from the normal diff. Add concrete project commands here when the stack is

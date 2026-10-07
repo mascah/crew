@@ -11,13 +11,21 @@ branches, and worktrees into one project.
 
 ## Project status
 
-Product scope and collection direction are agreed. This repository currently
-contains the specification, source research, and implementation handoff; the
-application has not been built. Runtime/probe checks and overhead measurements
-are deferred to implementation from the MacBook.
+The six original design decisions for issue #1 have been reviewed against saved
+validation evidence. Python/FastAPI with React/TypeScript/Vite is selected.
+The [operating foundations](docs/work/agent-activity/spec.md#implementation-foundations)
+are settled: SQLite with local outage queues, private account-restricted
+Tailscale Serve access, user-session startup, and explicit freshness targets.
+This repository contains the specification, source research, disposable probes,
+measured results, and implementation handoff; the application has not been built.
+Remaining source
+coverage, package compatibility, recovery, and deployed performance checks are
+separated in the handoff.
 
 - [Specification](docs/work/agent-activity/spec.md)
 - [Implementation handoff and delivery](docs/work/agent-activity/plan.md)
+- [Saved validation evidence and limits](docs/work/agent-activity/validation.md)
+- [Resume context](docs/work/agent-activity/resume.md)
 - [Collection findings and validation limits](docs/work/agent-activity/discovery.md)
 - [Office predecessor review](docs/work/office-review/discovery.md)
 - [Agent workflow](docs/agents/workflow.md)
