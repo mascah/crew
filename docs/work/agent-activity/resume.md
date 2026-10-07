@@ -8,7 +8,7 @@ Do not restart the product interview or repeat passing live probes.
 
 ## Implementation state
 
-- Branch `implement-agent-activity`, pushed; not merged to `main`. Code in
+- Merged to `main` on 2026-10-07 and issue #1 closed. Code in
   `crew/` and `web/`, tests in `tests/`. `just setup`, `just check` and
   `just build` are the whole local loop.
 - **Deployed on both Macs** on 2026-10-07. Each runs from its own checkout at

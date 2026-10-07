@@ -210,7 +210,7 @@ experiments. Their storage and page acceptance checks remain in delivery.
 
 ## Implementation validation
 
-Recorded on 2026-10-07 for branch `implement-agent-activity` (`crew/`, `web/`,
+Recorded on 2026-10-07 for the first implementation (`crew/`, `web/`,
 `tests/`). Five kinds of evidence are kept apart: automated fixtures, read-only
 runs over the MacBook's real native records, bounded live probes, local
 measurements, and [checks on the deployed two-Mac setup](#deployed-two-mac-checks).

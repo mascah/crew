@@ -72,7 +72,7 @@ uses the [agreed acceptance](spec.md#acceptance-of-the-agreed-behavior).
 
 ### Delivery status
 
-As of 2026-10-07, on branch `implement-agent-activity`. Evidence and its limits
+As of 2026-10-07, merged to `main`. Evidence and its limits
 are in the [implementation validation](validation.md#implementation-validation).
 
 | Increment | State |
