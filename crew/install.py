@@ -97,18 +97,23 @@ def hooks(cfg: config.Config, home: Path, remove: bool, dry_run: bool) -> int:
 
 
 def hermes(cfg: config.Config, remove: bool, dry_run: bool) -> int:
-    target = Path(cfg.hermes_home).expanduser() / "plugins" / "crew"
-    if not target.parent.parent.is_dir():
-        print(f"skipped    hermes: {target.parent.parent} not found")
+    root = Path(cfg.hermes_home).expanduser()
+    if not root.is_dir():
+        print(f"skipped    hermes: {root} not found")
         return 0
-    print(f"{'remove' if remove else 'install'}    {target}")
-    if dry_run:
-        return 0
-    shutil.rmtree(target, ignore_errors=True)
+    # Hermes loads plugins per profile: the default home and each named profile.
+    for home in [root, *sorted(p for p in (root / "profiles").glob("*") if p.is_dir())]:
+        target = home / "plugins" / "crew"
+        print(f"{'remove' if remove else 'install'}    {target}")
+        if dry_run:
+            continue
+        shutil.rmtree(target, ignore_errors=True)
+        if not remove:
+            shutil.copytree(Path(__file__).with_name("hermes_plugin"), target,
+                            ignore=shutil.ignore_patterns("__pycache__"))
     if not remove:
-        shutil.copytree(Path(__file__).with_name("hermes_plugin"), target,
-                        ignore=shutil.ignore_patterns("__pycache__"))
-        print("Enable it with `hermes plugins enable crew`, then restart Hermes sessions.")
+        print("Enable it in each profile with `hermes [-p PROFILE] plugins enable crew`,"
+              " then restart the Hermes gateway.")
     return 0
 
 

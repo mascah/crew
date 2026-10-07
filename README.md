@@ -90,7 +90,7 @@ Then, on each Mac from that checkout:
 ```sh
 uv sync --no-dev
 uv run python -m crew install hooks      # compiles crew-emit; add --dry-run to preview
-uv run python -m crew install hermes     # where Hermes is installed
+uv run python -m crew install hermes     # where Hermes is installed; then enable it per profile
 uv run python -m crew install collector  # per-user LaunchAgent
 ```
 
