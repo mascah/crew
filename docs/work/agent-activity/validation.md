@@ -374,9 +374,12 @@ restarted service sees each reporter within the stale threshold.
   loaded in the logged-in user's session; that they come back after a Mini
   reboot with automatic login, or activate for an SSH-only session, remains a
   configuration-based expectation.
-- **Codex hooks.** Codex asks the author to review newly added hooks before it
-  runs them; until then Codex sessions are observed from the daemon and rollouts
-  only, which is how every Codex result above was obtained.
+- **Codex hooks.** The author approved the added hooks in Codex on both Macs
+  later on 2026-10-07, and each Mac's journal then received Codex `SessionEnd`
+  events through the installed writer with only whitelisted fields. Every Codex
+  result above predates that and came from the daemon and rollouts alone; a
+  Codex `SessionStart` and a session running outside the daemon with hooks
+  active have not been observed yet.
 - **Hermes.** One real turn with a tool call was observed on the Mini. Hermes
   human-input waits, delegation and resume have fixture evidence only, and the
   MacBook has no Hermes.

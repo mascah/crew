@@ -22,8 +22,9 @@ Do not restart the product interview or repeat passing live probes.
 - Hermes on the Mini was updated from `bd0affe5` to `865ba906` with its own
   backup option; Crew's observer plugin is enabled in its three profiles.
 - Codex shows newly added hooks for the author's review before running them.
-  Until that is done on each Mac, Codex is observed from its daemon and
-  rollouts, which already gives state, waits and finished requests.
+  The author approved them on both Macs on 2026-10-07 and Codex callbacks have
+  reached each journal since. A later change to the hook command needs that
+  review again.
 - To remove everything: each `install` command takes `--remove`; the Serve route
   goes with `tailscale serve --https=8787 off`; the original harness settings
   are beside the edited ones as `.before-crew`.

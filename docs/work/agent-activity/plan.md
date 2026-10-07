@@ -80,7 +80,7 @@ are in the [implementation validation](validation.md#implementation-validation).
 | Validate collection | Built. Common model and all three adapters pass model-free fixtures; Claude and Codex were run read-only over the MacBook's real records; bounded live probes covered hosted Claude, standalone Codex, and one real Hermes turn on the Mini. |
 | Deliver a usable activity view | Built. Service, storage, access roles and the page pass `just check`; the built page was exercised in desktop Chrome against demo and real data at desktop, tablet and phone widths. No physical phone or tablet has opened it. |
 | Join the two Macs | Deployed with the author's approval: Mini service behind Tailscale Serve on HTTPS port 8787, collectors and hooks on both Macs, Hermes updated on the Mini with the observer plugin in each profile. See the [deployed checks](validation.md#deployed-two-mac-checks). |
-| Record release evidence | Recorded for the deployed setup except what is listed as [not yet shown](validation.md#what-is-not-yet-shown): reboot and SSH-only startup, Codex hook review, Hermes waits and delegation on real sessions, battery and sleep, and physical devices. |
+| Record release evidence | Recorded for the deployed setup except what is listed as [not yet shown](validation.md#what-is-not-yet-shown): reboot and SSH-only startup, Hermes waits and delegation on real sessions, battery and sleep, and physical devices. |
 
 The table below still lists every release check. Rows covered by automated
 tests or by the deployed checks are answered in the validation report; the
