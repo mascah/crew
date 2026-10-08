@@ -5,6 +5,7 @@ import pytest
 from conftest import T0, VIEWER, completion, session
 from test_claude import SID
 from test_claude import Home as ClaudeHome
+from test_hermes import Clock, saved_session
 
 from crew import collector as collector_module
 from crew import config, journal
@@ -303,3 +304,63 @@ def test_text_cut_mid_character_is_still_stored_and_sent(tmp_path, service, link
     collector.tick(T0)
     assert service.snapshot()["sessions"][0]["activity"] == "Editing ?"
     assert service.completions()["items"][0]["excerpt"] == "Done ?"
+
+
+def test_hermes_profile_workspace_reaches_the_page_without_reassigning_history(
+        tmp_path, service, link, monkeypatch):
+    """Saved Discord identity, fresh observer context, collector restart and HTTP API."""
+    repo = tmp_path / "checkouts/keyborg"
+    repo.mkdir(parents=True)
+    subprocess.run(["git", "-C", repo, "init", "-q"], check=True)
+    subprocess.run(["git", "-C", repo, "remote", "add", "origin",
+                    "git@github.com:mascah/keyborg.git"], check=True)
+    hermes = tmp_path / "hermes"
+    profile = hermes / "profiles/keyborg-factory"
+    saved_session(profile, "discord-session", title="Discord task")
+    monkeypatch.setattr(collector_module, "ClaudeAdapter", lambda *a, **k: FakeAdapter("claude"))
+    monkeypatch.setattr(collector_module, "CodexAdapter", lambda *a, **k: FakeAdapter("codex"))
+    cfg = config.Config(machine_id="mini", machine_name="Mini", hermes_home=str(hermes))
+    state = tmp_path / "state"
+    collector = Collector(cfg, state, link)
+    clock = Clock()
+
+    def emit(name, **fields):
+        journal.append(state / "journal.jsonl", clock.event(
+            name, session_id="discord-session", platform="discord", **fields))
+
+    emit("pre_llm_call", turn_id="old")
+    emit("post_llm_call", response="Before attribution")
+    emit("on_session_end", completed=True)
+    service.now = clock.now
+    collector.tick(clock.now)
+    [before] = service.completions()["items"]
+    assert before["project_id"] is None
+    assert service.snapshot()["sessions"][0]["checkout"] is None
+
+    restarted = Collector(cfg, state, link)
+    metadata = {"hermes_home": str(profile), "cwd": str(repo),
+                "cwd_source": "terminal", "terminal_backend": "local"}
+    emit("pre_llm_call", turn_id="new", **metadata)
+    restarted.tick(clock.now)
+    snapshot = service.snapshot()
+    [session] = snapshot["sessions"]
+    assert (session["machine_id"], session["harness"], session["session_id"]) == (
+        "mini", "hermes", "discord-session")
+    assert session["checkout"] == str(repo) and session["state"] == "working"
+    [project] = snapshot["projects"]
+    assert project["name"] == "keyborg" and project["detail"] == "github.com/mascah/keyborg"
+    assert session["project_id"] == project["id"]
+
+    emit("post_llm_call", response="After attribution", **metadata)
+    emit("on_session_end", completed=True, **metadata)
+    restarted.tick(clock.now)
+    again = Collector(cfg, state, link)
+    (profile / "config.yaml").write_text("terminal:\n  cwd: /different/today\n")
+    again.tick(clock.now + 1)
+    items = {item["excerpt"]: item for item in service.completions()["items"]}
+    assert len(items) == 2
+    assert items["Before attribution"]["project_id"] is None
+    assert items["After attribution"]["project_id"] == project["id"]
+    assert [(c.request_id, c.cwd) for report in link.reports for c in report.completions] == [
+        ("old", None), ("new", str(repo)),
+    ]

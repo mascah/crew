@@ -19,6 +19,13 @@ WAIT_KINDS = {"clarify": "Waiting for an answer"}
 NO_WAITS = "Installed Hermes lacks human-input observers: waits are not observed"
 
 
+def local_cwd(value: str | None) -> str | None:
+    if not value or value.strip() in {".", "auto", "cwd"}:
+        return None
+    path = Path(value).expanduser()
+    return str(path) if path.is_absolute() else None
+
+
 class HermesAdapter:
     harness = "hermes"
 
@@ -38,17 +45,37 @@ class HermesAdapter:
             "title": None, "cwd": None, "known": False,
         })
         s["at"], s["pid"] = ts, event.get("pid") or s.get("pid")
-        if not s["known"]:  # retried until Hermes has saved the session
-            s["known"] = self._lookup(sid, s, event)
+        if "terminal_backend" in event:
+            s["terminal_backend"] = event["terminal_backend"]
+        local = s.get("terminal_backend", "local") == "local"
+        if not local:
+            s["cwd"], s["cwd_source"] = None, None
+        # A saved row can be incomplete, and later events may add runtime context.
+        s["known"] = self._lookup(sid, s, event)
+        cwd, source = local_cwd(event.get("cwd")), event.get("cwd_source")
+        profile = event.get("hermes_home")
+        profile = str(Path(profile).expanduser()) if profile else None
+        if local and cwd:
+            if source == "runtime":
+                s["cwd"], s["cwd_source"] = cwd, source
+            elif source in {"terminal", "cli"} and s.get("cwd_source") not in {"native", "runtime"}:
+                # An out-of-scope gateway callback may refer to its launch profile.
+                if (source == "cli" or profile
+                        and (not s["known"] or s.get("hermes_home") == profile)):
+                    s["cwd"], s["cwd_source"] = cwd, source
+                    s["cwd_home"] = profile
+            elif not source and event.get("platform") == "cli" and not s["cwd"]:
+                s["cwd"], s["cwd_source"] = cwd, "cli"  # journals from older observers
         return s
 
     def _lookup(self, sid: str, s: dict, event: dict) -> bool:
         """Saved identity from Hermes's own session store, opened read-only."""
-        home = Path(event.get("hermes_home") or self.home)
-        if event.get("platform") == "cli":
-            s["cwd"] = event.get("cwd")
+        home = Path(event.get("hermes_home") or s.get("hermes_home") or self.home).expanduser()
         # One gateway serves every profile, so the session may be saved in any of them.
-        for store in [home / "state.db", *sorted(home.glob("profiles/[!.]*/state.db"))]:
+        stores = dict.fromkeys([home / "state.db", self.home / "state.db",
+                               *sorted(home.glob("profiles/[!.]*/state.db")),
+                               *sorted(self.home.glob("profiles/[!.]*/state.db"))])
+        for store in stores:
             with contextlib.suppress(sqlite3.Error, OSError, ValueError):
                 db = sqlite3.connect(f"file:{store}?mode=ro", uri=True, timeout=0.2)
                 try:
@@ -59,8 +86,15 @@ class HermesAdapter:
                 finally:
                     db.close()
                 if row:
-                    s["cwd"] = row[0] or row[1] or s["cwd"]
-                    s["title"] = row[2]
+                    if (s.get("cwd_source") == "terminal"
+                            and s.get("cwd_home") != str(store.parent)):
+                        s["cwd"], s["cwd_source"] = None, None
+                    s["hermes_home"] = str(store.parent)
+                    cwd = local_cwd(row[0]) or local_cwd(row[1])
+                    if (cwd and s.get("terminal_backend", "local") == "local"
+                            and s.get("cwd_source") != "runtime"):
+                        s["cwd"], s["cwd_source"] = cwd, "native"
+                    s["title"] = row[2] or s["title"]
                     # A parent link alone can be a branch or reset; delegation is marked.
                     config = json.loads(row[4] or "{}")
                     if row[3] and config.get("_delegate_from") == row[3]:

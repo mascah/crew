@@ -43,12 +43,50 @@ def _append(path: Path, entry: dict) -> None:
         os.close(fd)
 
 
+def _context(platform: str | None) -> dict:
+    """Snapshot routed context; never rebuild profile policy or use a gateway cwd."""
+    context = {"terminal_backend": "unknown"}
+    try:
+        from hermes_constants import get_hermes_home
+
+        context["hermes_home"] = str(get_hermes_home())
+    except ImportError:
+        context["hermes_home"] = os.environ.get("HERMES_HOME", "")
+    except Exception:
+        return context
+    try:
+        from tools.terminal_scope import terminal_env
+    except ImportError:
+        if platform != "cli":
+            return context
+        terminal_env = os.environ.get
+    try:
+        backend = terminal_env("TERMINAL_ENV", "local").strip().lower()
+        context["terminal_backend"] = backend or "local"
+        if context["terminal_backend"] != "local":
+            return context  # a remote/container path has no verified host mapping
+        raw, source = "", "runtime"
+        with contextlib.suppress(ImportError):
+            from agent.runtime_cwd import scoped_session_cwd
+
+            raw = scoped_session_cwd()
+        if not raw:
+            raw, source = terminal_env("TERMINAL_CWD", ""), "terminal"
+        if not raw and platform == "cli":
+            raw, source = os.getcwd(), "cli"
+        if raw and str(raw).strip() not in {".", "auto", "cwd"}:
+            path = Path(raw).expanduser()
+            if path.is_absolute():
+                context.update(cwd=str(path), cwd_source=source)
+    except Exception:
+        context["terminal_backend"] = "unknown"  # refusal/unavailable policy, still emit lifecycle
+    return context
+
+
 def _emit(event: str, **fields) -> None:
     try:
         entry = {"ts_ns": time.time_ns(), "harness": "hermes", "event": event,
-                 "pid": os.getpid(), "hermes_home": os.environ.get("HERMES_HOME", ""), **fields}
-        with contextlib.suppress(OSError):  # the working folder may have been removed
-            entry["cwd"] = os.getcwd()
+                 "pid": os.getpid(), **fields, **_context(fields.get("platform"))}
         _append(JOURNAL, entry)
     except Exception:  # observation must never disturb the agent
         with contextlib.suppress(Exception):
