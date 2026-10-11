@@ -1,6 +1,6 @@
 {
   "repo": "mascah/crew",
-  "image": "crew-worker",
+  "image": "crew-worker:latest",
   "setup": "setup.sh",
   "verification": {
     "local": [
