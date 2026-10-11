@@ -1,0 +1,17 @@
+{
+  "repo": "mascah/crew",
+  "image": "crew-worker",
+  "setup": "setup.sh",
+  "verification": {
+    "local": [
+      "just",
+      "check"
+    ]
+  },
+  "blockingLabels": [
+    "needs-triage",
+    "question",
+    "ready-for-human",
+    "wontfix"
+  ]
+}
