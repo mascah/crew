@@ -3,6 +3,15 @@
 Tracking: [Hermes attribution (#2)](https://github.com/mascah/crew/issues/2) and
 [container observation (#3)](https://github.com/mascah/crew/issues/3).
 
+**2026-10-08 update: Docker observability is deferred by the author.** The
+uncommitted Docker implementation and setup guides have been removed. Existing
+host observation and the Hermes attribution fix in `fcb4d21` remain intact.
+The Docker requirements and delivery step below are retained as earlier planning;
+the container slice is inactive. Revisit the approach before resuming, aiming for
+one-time setup and passive operation without per-run observation steps. Mount-based
+observation and an observer baked into the worker image were considered; no future
+implementation approach is selected. No Docker change was deployed or published.
+
 Status: scope shaped on 2026-10-08. Independent container sessions and no factory
 controller coupling are selected. The author also plans Codex sessions in Docker
 and wants to avoid unnecessary complexity. Standard container setup exposing native
