@@ -1,0 +1,37 @@
+# Grove: where its documents live, which branch holds what is agreed, and
+# the harnesses init writes Grove's skills for.
+root: grove
+target: main
+# Each harness init writes Grove's skills for (claude, codex, cursor,
+# opencode, pi, hermes), as skills or, where the harness has them, as
+# commands. Run grove init again after changing it.
+agents:
+  claude: skills
+  codex: skills
+# The change schema a new change has unless the owner names another while
+# proposing: Grove's default, or one of the project's in <root>/schemas/.
+schema: default
+# Facts about this project given to every skill: the language, how tests
+# run, anything an agent cannot read from the code. Keep it short.
+context: "The previous work planning in docs/ is historical reference only."
+# Extra lines for Grove's instructions: under documents, for one kind of
+# document, given when it is written; under skills, for one skill, given
+# with its guide. Such as
+#   documents:
+#     proposal:
+#       - List who is affected.
+#   skills:
+#     implement:
+#       - Commit after each task, naming its task ID.
+# Kinds: proposal, change-spec, tasks, implementation, spec, and those of
+# the project's own schemas.
+# Skills: explore, prototype, propose, plan, implement, archive.
+rules:
+  skills:
+    implement:
+      - Work in the worktrees
+      - Commit after each task, naming its task ID.
+      - When you are done, push the branch to origin and open a pull request with gh pr create, listing the changes archived and each blocked task with its question.
+      - When working on a cycle with multiple changes, create a branch and pull request for each individual change using branch chaining
+      - When the remote is GitHub, create a stacked pr using the gh cli
+      - Never take a shortcut because a task's Files line misses a file; do the right thing and record it as `Also changed:` in implementation.md.
